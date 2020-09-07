@@ -13,6 +13,7 @@ VEML7700 als;
 iAQcore iaqcore;
 SHTSensor sht;
 
+
 //Definicion de los pines
 const int humedadPinINT = 36;
 const int humedadPinEXT = 39;
@@ -27,10 +28,6 @@ const int ledAzul = 16;
 const char* ssid = "MOVISTAR_9E73";
 const char* password = "bmrpzvM3yQVXzXYPT7qh";
 const char* token = "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZW5hbnRAdGhpbmdzYm9hcmQub3JnIiwic2NvcGVzIjpbIlRFTkFOVF9BRE1JTiJdLCJ1c2VySWQiOiJlMWQ4NTU0MC1iYzlkLTExZWEtYTI2YS0wMWZmNTZiMDBiYzIiLCJlbmFibGVkIjp0cnVlLCJpc1B1YmxpYyI6ZmFsc2UsInRlbmFudElkIjoiZTBmMDNmMzAtYmM5ZC0xMWVhLWEyNmEtMDFmZjU2YjAwYmMyIiwiY3VzdG9tZXJJZCI6IjEzODE0MDAwLTFkZDItMTFiMi04MDgwLTgwODA4MDgwODA4MCIsImlzcyI6InRoaW5nc2JvYXJkLmlvIiwiaWF0IjoxNTk2MDM1MTE1LCJleHAiOjE2Mjc1NzExMTV9.oGd85JaLhScR2cC5AX6RdcQAJJeq7pl6Hglq4Bk4pFerIikHXEyTSgySdhKliBKLXpr9lwbbdgROF4u8KiY_FA";
-const char* T_DESCONEXION_MAX;
-float T_Desconexion = 0;
-float T_MUESTREO;
-boolean riegoManual = false;
 
 void setup() {
   Serial.begin(115200);
@@ -86,13 +83,22 @@ void led_wifi_connecting() {
 
 
 void led_parpadeo(int color) {
-  //digitalWrite(ledRojo, LOW);
-  //digitalWrite(ledVerde, LOW);
   for (int i = 0; i < 10; i++) {
     digitalWrite(color, HIGH);
     delay(500);
     digitalWrite(color, LOW);
-    Serial.println(i);
+    delay(500);
+  }
+}
+
+void led_parpadeo_mezcla(int color, int color1) {  
+  for (int i = 0; i < 10; i++) {
+     digitalWrite(color, HIGH);
+     digitalWrite(color1, HIGH);
+     delay(500);
+     digitalWrite(color, LOW);
+     digitalWrite(color1, LOW);
+ 
     delay(500);
   }
 }
@@ -103,24 +109,46 @@ int calcularPeso() {
 }
 
 int calcularHumedadSueloINT() {
-  int valor_humedad = 0;
+  //Devuelva el valor a la inversa 4095 es que no tinee nada de humedad
+  //El valor Minimo obtenido es de 1024, lo que significa que esa es la mayor humedad 
+  //Se obtiene el valor en tanto por cierto mediante una regla de tres
+  //1024              100%
+  //valor_humedad       X%
+  //(valor_humedad *100/1024)/100
+int valor_humedad = 0;
   valor_humedad = analogRead(humedadPinINT);
-  Serial.print("Humedad del suelo analogica:  "); Serial.println(valor_humedad);
-  valor_humedad = 1024 - (valor_humedad / 4);
-  return valor_humedad;
-}
-
-int calcularHumedadSueloEXT() {
-  int valor_humedad = 0;
-  valor_humedad = analogRead(humedadPinINT);
-  valor_humedad = 1024 - (valor_humedad / 4);
+  Serial.println(valor_humedad);
+   int valor = 4095 - valor_humedad;
+  valor_humedad = (valor * 100)/3071;
   return valor_humedad;
 }
 
 int comprobarAgua() {
   int valor_agua = 0;
   valor_agua = analogRead(aguaPin);
-  if (valor_agua > 3500) valor_agua = 0;
+  if (valor_agua > 3500){ valor_agua = 0;}else{ valor_agua = 1;}
+  return valor_agua;
+}
+
+int calcularHumedadSueloEXT() {
+  //Devuelva el valor a la inversa 4095 es que no tinee nada de humedad
+  //El valor Minimo obtenido es de 1024, lo que significa que esa es la mayor humedad 
+  //Se obtiene el valor en tanto por cierto mediante una regla de tres
+  //1024              100%
+  //valor_humedad       X%
+  //(valor_humedad *100/1024)/100
+  int valor_humedad = 0;
+  valor_humedad = analogRead(humedadPinINT);
+  Serial.print(valor_humedad);
+  int valor = 4095 -valor_humedad;
+  valor_humedad = (valor * 100)/3962;
+  return valor_humedad;
+}
+
+int comprobarAgua() {
+  int valor_agua = 0;
+  valor_agua = analogRead(aguaPin);
+  if (valor_agua > 3500){ valor_agua = 0;}else{ valor_agua = 1;}
   return valor_agua;
 }
 
@@ -136,7 +164,9 @@ int read_co2() {
   uint32_t resist;
   uint16_t etvoc;
   iaqcore.read(&eco2, &stat, &resist, &etvoc);
-  if (eco2 > 30000) {
+  Serial.print(iaqcore.getCO2PredictionPPM());
+   Serial.println(" ppm");
+  if (eco2 > 2000) {
     eco2 = 449;
   }
   return eco2;
@@ -171,14 +201,15 @@ void desactivarRele() {
 }
 
 
-int sendData(String name_value, float value) {
+int sendData(JsonObject& valores) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-
+      char json_str[1000];
+    valores.printTo(json_str, sizeof(json_str));
     http.begin("http://138.4.92.46:8080/api/v1/66WxSzusOoPemMXixHHV/telemetry");
     http.addHeader("Content-Type", "application/json");
     http.addHeader("X-Authorization", token);
-    int httpResponseCode = http.POST("{" + name_value + ":" + value + "}"); //Send the actual POST request
+    int httpResponseCode = http.POST(json_str); //Send the actual POST request
 
 
     if (httpResponseCode > 0) {
@@ -188,6 +219,7 @@ int sendData(String name_value, float value) {
     } else {
       Serial.print("Error on sending POST Request: ");
       Serial.println(httpResponseCode);
+      
     }
     http.end();
     return httpResponseCode;
@@ -201,7 +233,7 @@ void readAttributes() {
   HTTPClient http;
   DynamicJsonBuffer jsonBuffer;
 
-  http.begin("http://138.4.92.46:8080/api/v1/5wzHzcmXmcvE0yk6leHq/attributes");
+  http.begin("http://138.4.92.46:8080/api/v1/66WxSzusOoPemMXixHHV/attributes");
   http.addHeader("Content-Type", "application/json");
   http.addHeader("X-Authorization", token);
 
@@ -211,7 +243,7 @@ void readAttributes() {
   if (httpCode > 0) {
     String payload = http.getString();
     JsonObject& root = jsonBuffer.parseObject(payload);
-    T_DESCONEXION_MAX = root["shared"]["T_DESCONEXION_MAX"];
+   // T_DESCONEXION_MAX = root["shared"]["T_DESCONEXION_MAX"];
   }
 
   http.end();
@@ -221,7 +253,7 @@ void readActuator() {
   HTTPClient http;
   DynamicJsonBuffer jsonBuffer;
 
-  http.begin("http://138.4.92.46:8080/api/plugins/telemetry/DEVICE/e6441210-5a6c-11ea-87a7-e3079b83229a/values/timeseries");
+  http.begin("http://138.4.92.46:8080/api/plugins/telemetry/DEVICE/75a6f2f0-c13e-11ea-bd36-25db62324136/values/timeseries");
   http.addHeader("Content-Type", "application/json");
   http.addHeader("X-Authorization", token);
 
@@ -229,54 +261,61 @@ void readActuator() {
   int httpCode = http.GET();
 
   if (httpCode > 0) {
-    T_Desconexion = 0;
     String payload = http.getString();
     JsonObject& root = jsonBuffer.parseObject(payload);
     String rele = root["rele"][0]["value"];
     String leds = root["leds"][0]["value"];
-    Serial.print("Actuador rele leido:  ");Serial.println(rele);
-    Serial.print("Actuador leds leido:  ");Serial.println(leds);
-  } else if (T_Desconexion > atof(T_DESCONEXION_MAX)) {
-    Serial.println("Pasando a Riego Manual");
-    led_parpadeo(4);//4 color para leds rojos
-    riegoManual = true;
+    String riegoManual = root["riegoManual"][0]["value"];
+    agua = comprobarAgua();
+    if(riegoManual == "true"){
+      led_parpadeo_mezcla(4,16);
+    }
+     if(rele == "1" && agua == "0"){
+      Serial.print("Actuador rele leido:  ");Serial.println(rele);
+      digitalWrite(relePin, HIGH);      
+      led_parpadeo(ledAzul);
+    }else if(rele == "0"){
+      Serial.print("Actuador rele leido:  ");Serial.println(rele);
+      digitalWrite(relePin, LOW);
+    }   
   } else {
-    T_Desconexion = T_Desconexion + 1;
-  }
+      Serial.print("Error on sending POST Request: ");
+      Serial.println(httpResponseCode);
+      led_parpadeo_mezcla(4,16);
+   } 
   http.end();
 
 }
 void loop() {
 
+  // allocate the memory for the document
+  DynamicJsonBuffer jsonBuffer;
+  // create an empty array
+  JsonObject& valores = jsonBuffer.createObject();
+
   int rele, peso, humedad_int, humedad_ext, co2, agua;
   float luminosidad, temperatura, humedad;
-  readActuator();
   // rele = comprobarSistema();
-  //Enviamos Valores
+  //Se recogen los valores
   peso = calcularPeso();
-  Serial.print("Peso: "); Serial.println(peso);
-  sendData("peso", peso);
   humedad_int = calcularHumedadSueloINT();
-  Serial.print("Humedad inferior: "  ); Serial.println(humedad_int);
-  sendData("humedad_inferior", humedad_int);
   humedad = read_humidity();
-  Serial.print("Humedad ambiental: "  ); Serial.println(humedad);
-  sendData("humedad_ambiental", humedad);
   co2 = read_co2();
-  Serial.print("Calidad: " );  Serial.println(co2)  ;
-  sendData("Co2", co2);
   luminosidad = read_lux();
-  Serial.print("Luminosidad: "  );  Serial.println(luminosidad) ;
-  sendData("luz_ambiental", luminosidad);
   temperatura = read_temperature();
-  Serial.print("Temperatura: "  ); Serial.println(temperatura)  ;
-  sendData("temperatura_ambiental", temperatura);
   agua = comprobarAgua();
-  Serial.print("Agua: "  );  Serial.println(agua);
-  sendData("agua", agua);
-  Serial.print("Rele: " ); Serial.println(rele);
-  //send_data("rele", rele);
 
+valores["humedad_ambiental"] = humedad;
+valores["luz_ambiental"] = luminosidad;
+valores["humedad_suelo"] = humedad_int;
+valores["sensor_peso"] = peso;
+valores["agua"] = agua;
+valores["Co2"] = co2;
+valores["temperatura_ambiental"] = temperatura;
 
+ valores.prettyPrintTo(Serial);
+  sendData(valores);
+delay(10000);
+readActuator();
   delay(50000);
 }
