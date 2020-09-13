@@ -145,12 +145,7 @@ int calcularHumedadSueloEXT() {
   return valor_humedad;
 }
 
-int comprobarAgua() {
-  int valor_agua = 0;
-  valor_agua = analogRead(aguaPin);
-  if (valor_agua > 3500){ valor_agua = 0;}else{ valor_agua = 1;}
-  return valor_agua;
-}
+
 
 float read_lux() {
   float luxis;
