@@ -159,7 +159,7 @@ int read_co2() {
   uint32_t resist;
   uint16_t etvoc;
   iaqcore.read(&eco2, &stat, &resist, &etvoc);
-  Serial.print(iaqcore.getCO2PredictionPPM());
+ 
    Serial.println(" ppm");
   if (eco2 > 2000) {
     eco2 = 449;
@@ -261,11 +261,11 @@ void readActuator() {
     String rele = root["rele"][0]["value"];
     String leds = root["leds"][0]["value"];
     String riegoManual = root["riegoManual"][0]["value"];
-    agua = comprobarAgua();
+
     if(riegoManual == "true"){
       led_parpadeo_mezcla(4,16);
     }
-     if(rele == "1" && agua == "0"){
+     if(rele == "1"){
       Serial.print("Actuador rele leido:  ");Serial.println(rele);
       digitalWrite(relePin, HIGH);      
       led_parpadeo(ledAzul);
@@ -274,9 +274,7 @@ void readActuator() {
       digitalWrite(relePin, LOW);
     }   
   } else {
-      Serial.print("Error on sending POST Request: ");
-      Serial.println(httpResponseCode);
-      led_parpadeo_mezcla(4,16);
+      Serial.print("Error on Reading Actuator: ");
    } 
   http.end();
 
@@ -302,7 +300,8 @@ void loop() {
 
 valores["humedad_ambiental"] = humedad;
 valores["luz_ambiental"] = luminosidad;
-valores["humedad_suelo"] = humedad_int;
+valores["humedad_suelo_inferior"] = humedad_int;
+valores["humedad_suelo_superior"] = humedad_int;
 valores["sensor_peso"] = peso;
 valores["agua"] = agua;
 valores["Co2"] = co2;
