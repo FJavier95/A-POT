@@ -48,10 +48,8 @@ se encuentran dentro de la carpeta src-arduino/libraries
 ## Contributing
 
 Proyecto realizado por:
-- Julián González Dos Reis
 - Francisco Javier García Álvarez
-- David Sánchez Fernández
-- Aitor Navarro Sanz
+
 
 ## Security
 
