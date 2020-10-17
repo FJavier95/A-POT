@@ -44,15 +44,6 @@ $ cd src-python/upsquare-build/ && python3 send_data_from_device.py
 Todas las librerías externas necesarias para el correcto funcionamiento 
 se encuentran dentro de la carpeta src-arduino/libraries
 
-
-## Contributing
-
-Proyecto realizado por:
-- Julián González Dos Reis
-- Francisco Javier García Álvarez
-- David Sánchez Fernández
-- Aitor Navarro Sanz
-
 ## Security
 
 Este proyecto realiza una conexión a una base de datos personal para almacenar
