@@ -25,10 +25,9 @@ const int ledVerde = 17;
 const int ledAzul = 16;
 
 //Parametros para el WiFi
-const char* ssid = "MOVISTAR_9E73";
-const char* password = "bmrpzvM3yQVXzXYPT7qh";
-const char* token = "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZW5hbnRAdGhpbmdzYm9hcmQub3JnIiwic2NvcGVzIjpbIlRFTkFOVF9BRE1JTiJdLCJ1c2VySWQiOiJlMWQ4NTU0MC1iYzlkLTExZWEtYTI2YS0wMWZmNTZiMDBiYzIiLCJlbmFibGVkIjp0cnVlLCJpc1B1YmxpYyI6ZmFsc2UsInRlbmFudElkIjoiZTBmMDNmMzAtYmM5ZC0xMWVhLWEyNmEtMDFmZjU2YjAwYmMyIiwiY3VzdG9tZXJJZCI6IjEzODE0MDAwLTFkZDItMTFiMi04MDgwLTgwODA4MDgwODA4MCIsImlzcyI6InRoaW5nc2JvYXJkLmlvIiwiaWF0IjoxNTk2MDM1MTE1LCJleHAiOjE2Mjc1NzExMTV9.oGd85JaLhScR2cC5AX6RdcQAJJeq7pl6Hglq4Bk4pFerIikHXEyTSgySdhKliBKLXpr9lwbbdgROF4u8KiY_FA";
-
+const char* ssid = "";
+const char* password = "";
+const char* token = "";
 void setup() {
   Serial.begin(115200);
   pinMode(humedadPinINT, INPUT);
