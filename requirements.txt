@@ -13,7 +13,7 @@ idna==2.8
 lxml==4.4.2
 mysql-connector-python==8.0.18
 ntlm-auth==1.4.0
-numpy==1.18.1
+numpy==1.22.0
 pandas==0.25.3
 protobuf==3.11.2
 psycopg2==2.7.5
